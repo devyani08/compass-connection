@@ -5,10 +5,10 @@ from pymongo import MongoClient
 
 # Function to connect to MongoDB and fetch Markdown content
 def fetch_markdown_from_db(job_id):
-    # Set up MongoDB client and fetch data
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["document-parsing"] 
-    collection = db["dps_data"]
+   
+    client = MongoClient("mongodb+srv://devyani08:devyani08@cluster0.is2at.mongodb.net/")
+    db = client["parsing-data"] 
+    collection = db["data_1"] 
 
     # Fetch the document based on job_id
     document = collection.find_one({"job_id": job_id})
