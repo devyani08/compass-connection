@@ -13,8 +13,14 @@ def fetch_markdown_from_db(job_id):
     # Fetch the document based on job_id
     document = collection.find_one({"job_id": job_id})
     
-    # Return the Markdown content (from the 'category' field)
-    return document.get("content") if document else None
+    if document:
+        content = document.get("content")
+        if content:
+            return content
+        else:
+            return "Content field is missing in the document."
+    else:
+        return f"Job ID {job_id} not found in the database."
 
 # Function to extract recommendations from Markdown content
 def extract_recommendations(md_content):
@@ -86,30 +92,36 @@ job_id = st.text_input("Job ID (mandatory for MongoDB)")
 if job_id:
     # Fetch the Markdown content from MongoDB based on job_id
     md_content = fetch_markdown_from_db(job_id)
+    
     if md_content:
-        st.write("Markdown content fetched from MongoDB.")
-
-        # Extract recommendations from the Markdown content
-        recommendations = extract_recommendations(md_content)
-
-        if recommendations:
-            # Generate JSON chunks using user inputs
-            json_chunks = generate_json_chunks(recommendations, title, stage, disease, specialty)
-
-            # Display the JSON chunks
-            st.subheader("Generated JSON:")
-            st.json(json_chunks)
-
-            # Option to download JSON file
-            json_output = json.dumps(json_chunks, indent=2)
-            st.download_button(
-                label="Download JSON",
-                data=json_output,
-                file_name="output.json",
-                mime="application/json"
-            )
+        if md_content.startswith("Content field is missing"):
+            st.warning(md_content)
+        elif md_content.startswith("Job ID"):
+            st.warning(md_content)
         else:
-            st.warning("No recommendations found in the fetched Markdown content. Please check the file format.")
+            st.write("Markdown content fetched from MongoDB.")
+
+            # Extract recommendations from the Markdown content
+            recommendations = extract_recommendations(md_content)
+
+            if recommendations:
+                # Generate JSON chunks using user inputs
+                json_chunks = generate_json_chunks(recommendations, title, stage, disease, specialty)
+
+                # Display the JSON chunks
+                st.subheader("Generated JSON:")
+                st.json(json_chunks)
+
+                # Option to download JSON file
+                json_output = json.dumps(json_chunks, indent=2)
+                st.download_button(
+                    label="Download JSON",
+                    data=json_output,
+                    file_name="output.json",
+                    mime="application/json"
+                )
+            else:
+                st.warning("No recommendations found in the fetched Markdown content. Please check the file format.")
     else:
         st.warning(f"Job ID {job_id} not found in the database.")
 else:
