@@ -85,6 +85,9 @@ st.header("Upload Markdown File or Enter Job ID")
 uploaded_file = st.file_uploader("Upload a Markdown (.md) file", type=["md"])
 job_id = st.text_input("Job ID (optional, for MongoDB)")
 
+# Initialize md_content to None to ensure it's always defined
+md_content = None
+
 if uploaded_file is not None:
     # Read the file content
     md_content = uploaded_file.read().decode("utf-8")
@@ -101,6 +104,7 @@ elif job_id:
 else:
     st.info("Please upload a Markdown file or enter a Job ID to begin.")
 
+# Check if md_content is defined before processing
 if md_content:
     # Extract recommendations from the Markdown content
     recommendations = extract_recommendations(md_content)
