@@ -14,7 +14,7 @@ def fetch_markdown_from_db(job_id):
     document = collection.find_one({"job_id": job_id})
     
     # Return the Markdown content (from the 'category' field)
-    return document.get("category") if document else None
+    return document.get("content") if document else None
 
 # Function to extract recommendations from Markdown content
 def extract_recommendations(md_content):
