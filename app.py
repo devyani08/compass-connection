@@ -1,16 +1,20 @@
 import streamlit as st
 import json
 import re
+import os
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+# Load environment variables for local development
+load_dotenv()
 
 # Function to connect to MongoDB and fetch Markdown content
 def fetch_markdown_from_db(job_id):
-   
-    client = MongoClient("mongodb+srv://devyani08:devyani08@cluster0.is2at.mongodb.net/")
-    db = client["parsing-data"] 
-    collection = db["data_1"] 
+    mongo_uri = os.getenv("MONGODB_URI", st.secrets["MONGODB_URI"])
+    client = MongoClient(mongo_uri)
+    db = client["parsing-data"]
+    collection = db["data_1"]
 
-    # Fetch the document based on job_id
     document = collection.find_one({"job_id": job_id})
     
     if document:
@@ -24,20 +28,14 @@ def fetch_markdown_from_db(job_id):
 
 # Function to extract recommendations from Markdown content
 def extract_recommendations(md_content):
-    """
-    Extract recommendations from Markdown table content.
-    """
-    # Split content by lines and filter out the header and separator lines
     lines = md_content.splitlines()
     table_lines = [line for line in lines if "|" in line and not line.startswith("|---")]
 
     recommendations = []
     for line in table_lines:
-        # Split the line into cells
-        cells = [cell.strip() for cell in line.split("|")[1:-1]]  # Ignore outer empty cells
-        if len(cells) == 3:  # Ensure the row has the correct number of columns
+        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+        if len(cells) == 3:
             cor, loe, recommendation = cells
-            # Skip header row
             if cor.lower() == "cor" and loe.lower() == "loe":
                 continue
             recommendations.append({
@@ -50,9 +48,6 @@ def extract_recommendations(md_content):
 
 # Function to generate JSON chunks
 def generate_json_chunks(recommendations, title, stage, disease, specialty):
-    """
-    Generate JSON chunks using the extracted recommendations and user inputs.
-    """
     base_json = {
         "title": title,
         "subCategory": [],
@@ -90,7 +85,6 @@ specialty = st.text_input("Specialty", "orthopedics")
 job_id = st.text_input("Job ID (mandatory for MongoDB)")
 
 if job_id:
-    # Fetch the Markdown content from MongoDB based on job_id
     md_content = fetch_markdown_from_db(job_id)
     
     if md_content:
@@ -101,18 +95,14 @@ if job_id:
         else:
             st.write("Markdown content fetched from MongoDB.")
 
-            # Extract recommendations from the Markdown content
             recommendations = extract_recommendations(md_content)
 
             if recommendations:
-                # Generate JSON chunks using user inputs
                 json_chunks = generate_json_chunks(recommendations, title, stage, disease, specialty)
 
-                # Display the JSON chunks
                 st.subheader("Generated JSON:")
                 st.json(json_chunks)
 
-                # Option to download JSON file
                 json_output = json.dumps(json_chunks, indent=2)
                 st.download_button(
                     label="Download JSON",
@@ -121,7 +111,7 @@ if job_id:
                     mime="application/json"
                 )
             else:
-                st.warning("No recommendations found in the fetched Markdown content. Please check the file format.")
+                st.warning("No recommendations found in the fetched Markdown content.")
     else:
         st.warning(f"Job ID {job_id} not found in the database.")
 else:
