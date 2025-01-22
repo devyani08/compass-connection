@@ -3,6 +3,7 @@ import json
 import re
 import os
 from pymongo import MongoClient
+from bson import ObjectId  # Import ObjectId
 from dotenv import load_dotenv
 
 # Load environment variables for local development
@@ -15,7 +16,8 @@ def fetch_markdown_from_db(job_id):
     db = client["parsing-data"]
     collection = db["data_1"]
 
-    document = collection.find_one({"job_id": job_id})
+    # Use ObjectId to query the job_id if it's an ObjectId type in MongoDB
+    document = collection.find_one({"job_id": ObjectId(job_id)})
     
     if document:
         content = document.get("content")
